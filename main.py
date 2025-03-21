@@ -3,7 +3,7 @@ import numpy as np
 
 def zmanjsaj_sliko(slika, sirina, visina):
     '''Zmanjšaj sliko na velikost sirina x visina.'''
-    pass
+    return cv.resize(slika, (sirina, visina))
 
 def obdelaj_sliko_s_skatlami(slika, sirina_skatle, visina_skatle, barva_koze) -> list:
     '''Sprehodi se skozi sliko v velikosti škatle (sirina_skatle x visina_skatle) in izračunaj število pikslov kože v vsaki škatli.
@@ -25,9 +25,30 @@ def doloci_barvo_koze(slika,levo_zgoraj,desno_spodaj) -> tuple:
     pass
 
 if __name__ == '__main__':
-    #Pripravi kamero
+    # Pripravi kamero
+    camera = cv.VideoCapture(0)
 
-    #Zajami prvo sliko iz kamere
+    # Preveri, ali je kamera odprta
+    if not camera.isOpened():
+        print("Ni mogoče odpreti kamere")
+        exit()
+
+    # Zajemi prvo sliko iz kamere
+    success, frame = camera.read()
+    if not success:
+        print("Ni mogoče zajeti slike iz kamere")
+        exit()
+
+    zmanjsana_slika = zmanjsaj_sliko(frame, 320, 240)
+
+    cv.imshow('Zmanjsana slika', zmanjsana_slika)
+    
+    # Pocaka da uporabnik stisne na tipko
+    cv.waitKey(0)
+
+    # Osvoboditev kamere
+    camera.release()
+    cv.destroyAllWindows()
 
     #Izračunamo barvo kože na prvi sliki
 
@@ -39,4 +60,3 @@ if __name__ == '__main__':
 
         #Kako velikost prebirne škatle vpliva na hitrost algoritma in točnost detekcije? Poigrajte se s parametroma velikost_skatle
         #in ne pozabite, da ni nujno da je škatla kvadratna.
-    pass
