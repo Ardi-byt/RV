@@ -12,7 +12,15 @@ def obdelaj_sliko_s_skatlami(slika, sirina_skatle, visina_skatle, barva_koze) ->
     Primer: Če je v sliki 25 škatel, kjer je v vsaki vrstici 5 škatel, naj bo seznam oblike
       [[1,0,0,1,1],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[1,0,0,0,1]]. 
       V tem primeru je v prvi škatli 1 piksel kože, v drugi 0, v tretji 0, v četrti 1 in v peti 1.'''
-    pass
+
+    spodnja_meja, zgornja_meja = barva_koze
+    skatle = []
+    for y in range(0, slika.shape[0] - visina_skatle + 1, visina_skatle):
+        for x in range(0, slika.shape[1] - sirina_skatle + 1, sirina_skatle):
+            okno = slika[y:y + visina_skatle, x:x + sirina_skatle]
+            piksli_koze = prestej_piklse_z_barvo_koze(okno, (spodnja_meja, zgornja_meja))
+            skatle.append((x, y, piksli_koze))
+    return skatle
 
 def prestej_piklse_z_barvo_koze(slika, barva_koze) -> int:
     '''Prestej število pikslov z barvo kože v škatli.'''
@@ -67,6 +75,9 @@ if __name__ == '__main__':
     barva_koze = doloci_barvo_koze(zmanjsana_slika, levo_zgoraj, desno_spodaj)
     print(f"Določena barva kože: spodnja meja = {barva_koze[0]}, zgornja meja = {barva_koze[1]}")
 
+    sirina_skatle = int(240 * 0.1)
+    visina_skatle = int(320 * 0.1)
+
     while True:
         success, frame = camera.read()
         if not success:
@@ -74,18 +85,22 @@ if __name__ == '__main__':
         
         zmanjsana_slika = zmanjsaj_sliko(frame, 240, 320)
 
+        skatle = obdelaj_sliko_s_skatlami(zmanjsana_slika, sirina_skatle, visina_skatle, barva_koze)
+        
+        # Narisi skatle na sliki
+        for x, y, piksli_koze in skatle:
+            if piksli_koze > 100:
+                cv.rectangle(zmanjsana_slika, (x, y), (x + sirina_skatle, y + visina_skatle), (0, 255, 0), 2)
+
         izbrano_obmocje = zmanjsana_slika[y:y+h, x:x+w]
         st_pikslov_koze = prestej_piklse_z_barvo_koze(izbrano_obmocje, barva_koze)
-
-        #Testiramo koliko pikzlov koze je ce funkcija dela vredu
-        cv.putText(zmanjsana_slika, f"Piksli koze: {st_pikslov_koze}", (10, 30), cv.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
     
         cv.imshow('Live kamera', zmanjsana_slika)
     
-    # Pocaka da uporabnik stisne q
+        # Pocaka da uporabnik stisne q
         if cv.waitKey(1) & 0xFF == ord('q'):
             break
 
-# Osvoboditev kamere
-camera.release()
-cv.destroyAllWindows()
+    # Osvoboditev kamere
+    camera.release()
+    cv.destroyAllWindows()
