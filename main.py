@@ -1,5 +1,6 @@
 import cv2 as cv
 import numpy as np
+import time
 
 def zmanjsaj_sliko(slika, sirina, visina):
     '''Zmanjšaj sliko na velikost sirina x visina.'''
@@ -79,6 +80,7 @@ if __name__ == '__main__':
     visina_skatle = int(320 * 0.1)
 
     while True:
+        start_time = time.time()
         success, frame = camera.read()
         if not success:
             break
@@ -94,6 +96,9 @@ if __name__ == '__main__':
 
         izbrano_obmocje = zmanjsana_slika[y:y+h, x:x+w]
         st_pikslov_koze = prestej_piklse_z_barvo_koze(izbrano_obmocje, barva_koze)
+
+        fps = 1.0 / (time.time() - start_time)
+        cv.putText(zmanjsana_slika, f"FPS: {fps:.1f}", (10, 20), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
     
         cv.imshow('Live kamera', zmanjsana_slika)
     
