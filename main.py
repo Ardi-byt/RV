@@ -16,7 +16,9 @@ def obdelaj_sliko_s_skatlami(slika, sirina_skatle, visina_skatle, barva_koze) ->
 
 def prestej_piklse_z_barvo_koze(slika, barva_koze) -> int:
     '''Prestej število pikslov z barvo kože v škatli.'''
-    pass
+    spodnja_meja, zgornja_meja = barva_koze
+    maska = cv.inRange(slika, spodnja_meja, zgornja_meja)
+    return cv.countNonZero(maska)
 
 def doloci_barvo_koze(slika, levo_zgoraj, desno_spodaj) -> tuple:
     '''Ta funkcija se kliče zgolj 1x na prvi sliki iz kamere. 
@@ -71,6 +73,12 @@ if __name__ == '__main__':
             break
         
         zmanjsana_slika = zmanjsaj_sliko(frame, 240, 320)
+
+        izbrano_obmocje = zmanjsana_slika[y:y+h, x:x+w]
+        st_pikslov_koze = prestej_piklse_z_barvo_koze(izbrano_obmocje, barva_koze)
+
+        #Testiramo koliko pikzlov koze je ce funkcija dela vredu
+        cv.putText(zmanjsana_slika, f"Piksli koze: {st_pikslov_koze}", (10, 30), cv.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
     
         cv.imshow('Live kamera', zmanjsana_slika)
     
