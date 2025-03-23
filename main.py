@@ -18,11 +18,24 @@ def prestej_piklse_z_barvo_koze(slika, barva_koze) -> int:
     '''Prestej število pikslov z barvo kože v škatli.'''
     pass
 
-def doloci_barvo_koze(slika,levo_zgoraj,desno_spodaj) -> tuple:
+def doloci_barvo_koze(slika, levo_zgoraj, desno_spodaj) -> tuple:
     '''Ta funkcija se kliče zgolj 1x na prvi sliki iz kamere. 
     Vrne barvo kože v območju ki ga definira oklepajoča škatla (levo_zgoraj, desno_spodaj).
       Način izračuna je prepuščen vaši domišljiji.'''
-    pass
+    x1, y1 = levo_zgoraj
+    x2, y2 = desno_spodaj
+    izbrano_obmocje = slika[y1:y2, x1:x2]
+    
+    povprecje = np.mean(izbrano_obmocje, axis=(0, 1))
+    std_dev = np.std(izbrano_obmocje, axis=(0, 1))
+    
+    spodnja_meja = np.maximum(povprecje - std_dev, 0).astype(np.uint8)
+    zgornja_meja = np.minimum(povprecje + std_dev, 255).astype(np.uint8)
+    
+    spodnja_meja_1_3 = np.array([[spodnja_meja[0], spodnja_meja[1], spodnja_meja[2]]], dtype=np.uint8)
+    zgornja_meja_1_3 = np.array([[zgornja_meja[0], zgornja_meja[1], zgornja_meja[2]]], dtype=np.uint8)
+    
+    return (spodnja_meja_1_3, zgornja_meja_1_3)
 
 if __name__ == '__main__':
     # Pripravi kamero
@@ -39,24 +52,32 @@ if __name__ == '__main__':
         print("Ni mogoče zajeti slike iz kamere")
         exit()
 
-    zmanjsana_slika = zmanjsaj_sliko(frame, 320, 240)
+    zmanjsana_slika = zmanjsaj_sliko(frame, 240, 320)
 
-    cv.imshow('Zmanjsana slika', zmanjsana_slika)
+    #Izberes obmocje obraza
+    r = cv.selectROI("Izberi območje obraza", zmanjsana_slika, fromCenter=False, showCrosshair=True)
+    cv.destroyWindow("Izberi območje obraza")
     
-    # Pocaka da uporabnik stisne na tipko
-    cv.waitKey(0)
-
-    # Osvoboditev kamere
-    camera.release()
-    cv.destroyAllWindows()
-
-    #Izračunamo barvo kože na prvi sliki
-
-    #Zajemaj slike iz kamere in jih obdeluj     
+    x, y, w, h = map(int, r)
+    levo_zgoraj = (x, y)
+    desno_spodaj = (x + w, y + h)
     
-    #Označi območja (škatle), kjer se nahaja obraz (kako je prepuščeno vaši domišljiji)
-        #Vprašanje 1: Kako iz števila pikslov iz vsake škatle določiti celotno območje obraza (Floodfill)?
-        #Vprašanje 2: Kako prešteti število ljudi?
+    barva_koze = doloci_barvo_koze(zmanjsana_slika, levo_zgoraj, desno_spodaj)
+    print(f"Določena barva kože: spodnja meja = {barva_koze[0]}, zgornja meja = {barva_koze[1]}")
 
-        #Kako velikost prebirne škatle vpliva na hitrost algoritma in točnost detekcije? Poigrajte se s parametroma velikost_skatle
-        #in ne pozabite, da ni nujno da je škatla kvadratna.
+    while True:
+        success, frame = camera.read()
+        if not success:
+            break
+        
+        zmanjsana_slika = zmanjsaj_sliko(frame, 240, 320)
+    
+        cv.imshow('Live kamera', zmanjsana_slika)
+    
+    # Pocaka da uporabnik stisne q
+        if cv.waitKey(1) & 0xFF == ord('q'):
+            break
+
+# Osvoboditev kamere
+camera.release()
+cv.destroyAllWindows()
